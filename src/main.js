@@ -8,7 +8,6 @@ import router from './router'
 import Session from './session.js'
 import * as VueGoogleMaps from 'vue2-google-maps'
 
-console.log(process.env)
 Vue.PUSHER_KEY = process.env.VUE_APP_PUSHER_KEY
 Vue.config.productionTip = false
 Vue.use(ElementUI)

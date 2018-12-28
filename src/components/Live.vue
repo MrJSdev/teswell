@@ -17,26 +17,41 @@
         @click="onMarkerClick"
       />
     </GmapMap>
-    <el-col :span="12" :offset="6" class="alerts-box">
-      <el-table
-        :data="alerts"
-        style="width: 100%">
-        <el-table-column
-          prop="date"
-          label="Date"
-          width="180">
-        </el-table-column>
-        <el-table-column
-          prop="location"
-          label="Name"
-          width="180">
-        </el-table-column>
-        <el-table-column
-          prop="type"
-          label="Type">
-        </el-table-column>
-      </el-table>
-    </el-col>
+
+      <el-col :span="12" :offset="6" class="alerts-box">
+        <div class="collapse-table">
+          <el-button type="text" @click="alertBox = !alertBox">
+            <transition name="slide-down">
+              <i class="el-icon el-icon-arrow-down" v-show="alertBox"></i>
+            </transition>
+            <transition name="fade-it">
+              <i class="el-icon el-icon-arrow-up" v-show="!alertBox"></i>
+            </transition>
+          </el-button>
+        </div>
+        <transition name="slide-down">
+          <div class="alerts-table" v-show="alertBox">
+            <el-table
+              :data="alerts"
+              style="width: 100%">
+              <el-table-column
+                prop="date"
+                label="Date"
+                width="180">
+              </el-table-column>
+              <el-table-column
+                prop="location"
+                label="Name"
+                width="180">
+              </el-table-column>
+              <el-table-column
+                prop="type"
+                label="Type">
+              </el-table-column>
+            </el-table>
+          </div>
+        </transition>
+      </el-col>
     <el-dialog
       title="Camera"
       class="camera-dialog"
@@ -68,7 +83,7 @@
           </video>
         </div>
       </div>
-      <div class="p10 download-section"><el-button type="primary" >Download</el-button></div>
+      <div class="p10 download-section"><el-button type="primary" class="download-btn">Download</el-button></div>
     </el-dialog>
   </div>
 </div>
@@ -77,7 +92,7 @@
 <script>
 import mapStylesMixin from './mixins/mapStyles.js'
 import videojs from 'video.js'
-import videojsFlash from 'videojs-flash'
+require('videojs-flash')
 export default {
   name: 'Live',
   mixins: [mapStylesMixin],
@@ -85,6 +100,8 @@ export default {
     return {
       mapCenter: { lat: 25.154412, lng: 55.390568 },
       showCamera: false,
+      player: null,
+      alertBox: false,
       map: {},
       alerts: [
         {
@@ -122,7 +139,6 @@ export default {
   },
   mounted () {
     this.$nextTick(() => {
-      console.log(console.log(this.$pusher))
       this.loadMap()
       this.openNotification()
     })
@@ -137,9 +153,6 @@ export default {
       })
     },
     loadMap () {
-      this.$channel.bind('my-event', (data) => {
-        console.log(data)
-      })
       let self = this
       this.$refs.mapRef.$mapPromise.then((map) => {
         self.map = map
@@ -149,32 +162,25 @@ export default {
       this.showCamera = true
     },
     setCameraVideo () {
-      console.log(videojsFlash, 'its')
       let options = {
         controls: true,
         autoplay: false,
-        // poster: require('../assets/img/loading.gif'),
         techOrder: ['flash', 'html5'],
+        // poster: require('../assets/img/loading.gif'),
         sources: [{
           src: 'rtmp://13.233.215.80:1935/live/'
         }]
       }
       this.$nextTick(function () {
         let playerId = document.getElementById('camera-player')
-        let player = videojs(playerId, options, function onPlayerReady () {
+        if (this.player !== null) return
+        this.player = videojs(playerId, options, function onPlayerReady () {
           console.log('its ready to play')
         })
         let loadingDiv = document.getElementsByClassName('vjs-loading-spinner')
-        player.on('waiting', function () {
-          console.log('Waiting')
-          // loadingDiv[0].style.visibility = 'visible'
-          // loadingDiv[0].style.display = 'block'
-          // loadingDiv[0].style.animation = 'loading-spinner 1s ease infinite'
-          console.log(loadingDiv[0].style)
-          // playerId.classList.add('loading')
-          // console.log(playerId.classList)
+        this.player.on('waiting', function () {
         })
-        player.on('ready', function () {
+        this.player.on('ready', function () {
           console.log('ready')
           loadingDiv[0].style.visibility = 'hidden'
           loadingDiv[0].style.display = 'none'
@@ -191,17 +197,20 @@ export default {
 #liveMap{
   width: 100%;
   position: relative;
+  overflow: hidden;
   height:100%;
 }
 .alerts-box{
-  -webkit-box-shadow: 0 0px 3px 4px rgba(0, 0, 0, 0.1);
-  -moz-box-shadow: 0 0px 3px 4px rgba(0, 0, 0, 0.1);
-  box-shadow: 0 0px 3px 4px rgba(0, 0, 0, 0.1);
   position: absolute;
   bottom: 0;
+}
+.alerts-box .el-table{
   -webkit-border-radius: 5px;
   -moz-border-radius: 5px;
   border-radius: 5px;
+  -webkit-box-shadow: 0 0px 5px 1px rgba(0, 0, 0, 0.1);
+  -moz-box-shadow: 0 0px 5px 1px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0px 5px 1px rgba(0, 0, 0, 0.1);
 }
 .my-video {
   position: relative;
@@ -273,9 +282,60 @@ export default {
   height: 40px;
 }
 .download-section{
+  padding: 0;
+  margin-top: 5px;
   text-align: right;
 }
 .rotate-box .el-button + .el-button {
   margin: 0;
+}
+  .download-btn{
+    padding:10px 20px;
+    background-color: #f5c93c;
+    border-color:#f5c93c;
+    -webkit-border-radius: 2px;
+    -moz-border-radius: 2px;
+    border-radius: 2px;
+  }
+  .collapse-table{
+    text-align: center;
+  }
+.collapse-table .el-icon{
+  font-size: 24px;
+  padding: 4px;
+  position: absolute;
+  left: 50%;
+  top: -10px;
+  margin-left: -16px;
+  background-color: #fff;
+  -webkit-border-radius: 20px;
+  -moz-border-radius: 20px;
+  border-radius: 20px;
+  -webkit-box-shadow: 0 0px 5px 1px rgba(0, 0, 0, 0.1);
+  -moz-box-shadow: 0 0px 5px 1px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0px 5px 1px rgba(0, 0, 0, 0.1);
+}
+
+.slide-down-enter-active {
+  transition: all 1s ease-in-out;
+}
+.slide-down-leave-active {
+  transition: all 1s ease-in-out;
+}
+.slide-down-enter, .slide-down-leave-to {
+  transform: translateY(300px);
+  opacity: 0;
+}
+.fade-it-enter-active {
+  transition: all 0s ease-in-out;
+  opacity: 0;
+}
+.fade-it-leave-active {
+  transition: all 0s ease-in-out;
+  opacity: 0;
+}
+.fade-it-enter, .fade-it-leave-to{
+  opacity: 0;
+  transform: translateY(-300px);
 }
 </style>

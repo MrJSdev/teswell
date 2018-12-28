@@ -21,17 +21,33 @@ body{
   font-family: 'Roboto', sans-serif;
   margin: 0;
 }
+  .el-dialog__wrapper.camera-dialog .el-dialog{
+    min-width: 600px;
+  }
 .el-dialog__wrapper.camera-dialog .el-dialog__body{
-  padding:0;
+  padding:5px;
 }
 .camera-dialog .el-dialog__header{
-  padding:10px;
+  padding:8px;
+  background-color: #f4f4f4;
+  border-bottom: solid thin rgba(0, 0, 0, 0.07);
+  text-transform: uppercase;
   border-radius: 3px;
 }
+  .camera-dialog  .el-dialog__headerbtn{
+    top: 10px;
+    right: 10px;
+  }
 #app {
 
 }
   .p10{
     padding: 10px;
+  }
+  .video-js .vjs-big-play-button {
+    font-size: 1.7em;
+    top: 45%;
+    left: 50%;
+    margin-left: -15px;
   }
 </style>
